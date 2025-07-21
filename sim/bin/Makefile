@@ -23,6 +23,8 @@ IVERILOG_SRC = $(SOURCE_DIR)/jtag_vpi.v \
                $(BENCH_DIR)/ram/ram_wb_b3.v \
                $(ADV_DEBUG_SRC)
 
+JTAG_VPI_SERVER_PORT = 5555
+
 all: sim_xrun
 
 build:
@@ -33,8 +35,8 @@ build:
 
 build_xrun:
 	@echo '##### Building ######'
-	$(Q)gcc -otest_client $(BENCH_DIR)/../test_client.c
-	$(Q)xrun -64 -sv -elaborate -I../.. -incdir $(INCLUDE_DIR) $(IVERILOG_SRC) $(IVERILOG_VPI_SRC) +access+r +jtag_vpi_enable=1
+	$(Q)gcc -otest_client $(BENCH_DIR)/../test_client.c -DSERVER_PORT=$(JTAG_VPI_SERVER_PORT)
+	$(Q)xrun -64 -sv -elaborate -I../.. -DJTAG_VPI_DEFAULT_SERVER_PORT=$(JTAG_VPI_SERVER_PORT) -incdir $(INCLUDE_DIR) $(IVERILOG_SRC) $(IVERILOG_VPI_SRC) +access+r +jtag_vpi_enable=1
 
 sim_xrun: build_xrun
 	@echo '##### Start the simulation ######'

@@ -15,7 +15,9 @@
 /* Configuration */
 #define SERVER_ADDRESS			"127.0.0.1"
 #define TEST_BUFFER_LEN			16
+#ifndef SERVER_PORT
 #define SERVER_PORT			5555
+#endif
 
 /* TAP defines */
 #define OR1K_TAP_INST_DEBUG		0x8
