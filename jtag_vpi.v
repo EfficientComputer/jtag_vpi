@@ -66,8 +66,8 @@ task main;
 begin
 	$display("JTAG debug module with VPI interface enabled\n");
 
-	reset_tap;
-	goto_run_test_idle_from_reset;
+	//reset_tap;
+	//goto_run_test_idle_from_reset;
 
 	while (1) begin
 
