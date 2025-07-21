@@ -16,7 +16,7 @@ module jtag_vpi
 #(	parameter DEBUG_INFO = 0,
 	parameter TP = 1,
 	parameter TCK_HALF_PERIOD = 50, // Clock half period (Clock period = 100 ns => 10 MHz)
-	parameter  CMD_DELAY = 1000
+	parameter  CMD_DELAY = 100
 )
 (
 	output reg	tms,
@@ -58,6 +58,7 @@ begin
 	// (this is around 20k ns if the flash_crash boot code
 	// is being booted from, else much bigger, around 10mil ns)
 	wait(init_done)
+        $display("%t ----> jtag_vpi started\n", $time);
 		if($test$plusargs("jtag_vpi_enable")) main;
 end
 
@@ -187,7 +188,7 @@ integer		nb_bits_in_this_byte;
 
 begin
 	if (DEBUG_INFO)
-		$display("(%0t) Task do_tms_seq of %d bits (length = %d)", $time, nb_bits, length);
+		$display("(%0t) Task do_tms_seq of %0d bits (length = %0d)", $time, nb_bits, length);
 
 	// Number of bits to send in the last byte
 	nb_bits_rem = nb_bits % 8;
@@ -225,7 +226,7 @@ integer		index;
 
 begin
 	if(DEBUG_INFO)
-		$display("(%0t) Task do_scan_chain of %d bits (length = %d)", $time, nb_bits, length);
+		$display("(%0t) Task do_scan_chain of %0d bits (length = %0d)", $time, nb_bits, length);
 
 	// Number of bits to send in the last byte
 	nb_bits_rem = nb_bits % 8;
