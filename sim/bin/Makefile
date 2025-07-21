@@ -23,13 +23,26 @@ IVERILOG_SRC = $(SOURCE_DIR)/jtag_vpi.v \
                $(BENCH_DIR)/ram/ram_wb_b3.v \
                $(ADV_DEBUG_SRC)
 
-all: build
+all: sim_xrun
 
 build:
 	@echo '##### Building ######'
 	$(Q)gcc -otest_client $(BENCH_DIR)/../test_client.c
 	$(Q)iverilog-vpi --name=jtag_vpi $(IVERILOG_VPI_SRC) > /dev/null
 	$(Q)iverilog -I$(INCLUDE_DIR) -ojtag_vpi_tb.vvp $(IVERILOG_SRC)
+
+build_xrun:
+	@echo '##### Building ######'
+	$(Q)gcc -otest_client $(BENCH_DIR)/../test_client.c
+	$(Q)xrun -64 -sv -elaborate -I../.. -incdir $(INCLUDE_DIR) $(IVERILOG_SRC) $(IVERILOG_VPI_SRC) +access+r +jtag_vpi_enable=1
+
+sim_xrun: build_xrun
+	@echo '##### Start the simulation ######'
+	$(Q)xrun -64 -R +access+r +jtag_vpi_enable=1 &
+	@sleep 5
+	@echo '##### Running the test client ######'
+	$(Q)./test_client
+	@sleep 1
 
 sim: build
 	@echo '##### Start the simulation ######'
@@ -39,4 +52,4 @@ sim: build
 	$(Q)./test_client
 	@sleep 1
 clean:
-	@rm -rf *.o *~ *.vpi *.vvp *.vcd test_client
+	@rm -rf *.o *~ *.vpi *.vvp *.vcd test_client xcelium.d xrun.*

@@ -3,3 +3,11 @@
 *.vpi
 *.vvp
 *.vcd
+*.log
+xrun.*
+*.shm
+*.dsn
+*.trn
+.simvision
+xcelium.d
+tags

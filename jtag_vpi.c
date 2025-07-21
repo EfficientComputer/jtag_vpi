@@ -13,6 +13,7 @@
 #include <arpa/inet.h>
 
 #include <vpi_user.h>
+#include <stddef.h>
 
 #include "jtag_common.h"
 

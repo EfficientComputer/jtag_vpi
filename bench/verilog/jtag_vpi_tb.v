@@ -48,7 +48,7 @@ initial begin
 	#200 sys_reset <= 0;
 end
 
-jtag_vpi #(.DEBUG_INFO(0))
+jtag_vpi #(.DEBUG_INFO(1))
 jtag_vpi0
 (
 	.tms(tms_pad_i),
