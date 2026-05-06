@@ -22,6 +22,15 @@ static void terminate_simulation(void)
 	vpi_control(vpiFinish, 1);
 }
 
+// After a jtag_vpi client disconnects, stop polling the TCP socket forever.
+// Rationale: the simulator may be running an in-flight app that is supposed
+// to terminate the simulation on its own (e.g. via an AHB exit-byte write or
+// WFI). Re-entering check_for_command() after disconnect would (a) re-create
+// the server socket via jtag_server_create() and (b) BLOCK in accept(),
+// freezing the app. Setting this flag short-circuits the polling so the
+// simulator simply continues running without a JTAG client.
+static int jtag_vpi_client_gone = 0;
+
 void vpi_check_for_command(char *userdata)
 {
 	vpiHandle systfref, args_iter, argh;
@@ -31,6 +40,13 @@ void vpi_check_for_command(char *userdata)
 	int ret;
 	(void)userdata;
 
+	// Once a client has disconnected, don't poll the (closed) socket again
+	// and do not let the disconnect kill the simulator -- the running app
+	// is responsible for ending the simulation.
+	if (jtag_vpi_client_gone) {
+		return;
+	}
+
 	// See if there is an incoming JTAG command
 	ret = check_for_command(&cmd);
 	if (ret == JTAG_SERVER_TRY_LATER) {
@@ -39,8 +55,13 @@ void vpi_check_for_command(char *userdata)
 	}
 	else if (ret != JTAG_SERVER_SUCCESS) {
 		if (ret == JTAG_SERVER_CLIENT_DISCONNECTED) {
-			// OpenOCD disconnected
-			vpi_printf("Ending simulation. Reason: jtag_vpi client disconnection.\n");
+			// jtag_vpi client closed its socket. Note it and stop
+			// polling forever, but do NOT $finish() -- let whatever
+			// is running inside the simulator continue.
+			vpi_printf("jtag_vpi client disconnected; "
+				"continuing simulation (no $finish).\n");
+			jtag_vpi_client_gone = 1;
+			return;
 		}
 		else {
 			// A communication error ocurred, cannot continue
@@ -137,6 +158,15 @@ void vpi_send_result_to_server(char *userdata)
 	vpiHandle array_word;
 
 	(void)userdata;
+
+	// Race-window guard: client may have disconnected between dispatching
+	// the last CMD_SCAN_CHAIN and SV reaching this $send_result_to_server.
+	// In that case there is nobody to send the result to, and writing to a
+	// dead socket would fall into the terminate_simulation() path below.
+	// Drop the response silently and let the simulation continue.
+	if (jtag_vpi_client_gone) {
+		return;
+	}
 
 	// Now setup the handles to verilog objects and check things
 	// Obtain a handle to the argument list
